@@ -3,20 +3,16 @@ import { ChevronDown } from "lucide-react";
 import { GameCard } from "./GameCard";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-interface Game {
-  id: number;
-  title: string;
-  image: string;
-}
+import { Game } from "@/hooks/useGames";
 
 interface GameGridProps {
   games: Game[];
   title: string;
   defaultOpen?: boolean;
+  onGameClick: (game: Game) => void;
 }
 
-export const GameGrid = ({ games, title, defaultOpen = true }: GameGridProps) => {
+export const GameGrid = ({ games, title, defaultOpen = true, onGameClick }: GameGridProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -37,6 +33,7 @@ export const GameGrid = ({ games, title, defaultOpen = true }: GameGridProps) =>
               key={game.id}
               title={game.title}
               image={game.image}
+              onClick={() => onGameClick(game)}
             />
           ))}
         </div>
