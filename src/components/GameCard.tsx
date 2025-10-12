@@ -1,12 +1,28 @@
 import { Card } from "@/components/ui/card";
+import { Headphones } from "lucide-react";
 
 interface GameCardProps {
   title: string;
   image: string;
   onClick?: () => void;
+  isContactCard?: boolean;
 }
 
-export const GameCard = ({ title, image, onClick }: GameCardProps) => {
+export const GameCard = ({ title, image, onClick, isContactCard = false }: GameCardProps) => {
+  if (isContactCard) {
+    return (
+      <Card 
+        onClick={onClick}
+        className="group relative overflow-hidden cursor-pointer border-border/50 bg-primary hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)]"
+      >
+        <div className="aspect-square overflow-hidden flex flex-col items-center justify-center p-6">
+          <Headphones className="h-16 w-16 text-primary-foreground mb-4" strokeWidth={1.5} />
+          <h3 className="text-base font-bold text-primary-foreground text-center">Contact Us</h3>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card 
       onClick={onClick}

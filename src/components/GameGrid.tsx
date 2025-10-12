@@ -34,6 +34,7 @@ export const GameGrid = ({ games, title, defaultOpen = true, onGameClick }: Game
               title={game.title}
               image={game.image}
               onClick={() => onGameClick(game)}
+              isContactCard={game.id === -1}
             />
           ))}
         </div>

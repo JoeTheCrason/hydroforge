@@ -18,7 +18,7 @@ const Index = () => {
   }, [games]);
 
   const allGames = useMemo(() => {
-    return games;
+    return games.filter(game => game.id !== -1);
   }, [games]);
 
   const filteredAndSortedFeaturedGames = useMemo(() => {
