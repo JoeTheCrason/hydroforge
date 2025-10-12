@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
-import { X, Maximize2, ExternalLink } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, Maximize2, ExternalLink, RefreshCw, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Game } from "@/hooks/useGames";
+import { GameBar } from "@/components/GameBar";
 
 interface GameViewerProps {
   game: Game | null;
@@ -10,6 +11,8 @@ interface GameViewerProps {
 
 export const GameViewer = ({ game, onClose }: GameViewerProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [showGameBar, setShowGameBar] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (game && iframeRef.current) {
@@ -35,7 +38,7 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
           alert("Failed to load game: " + error);
         });
     }
-  }, [game, onClose]);
+  }, [game, onClose, refreshKey]);
 
   if (!game) return null;
 
@@ -58,6 +61,10 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
           newWindow.document.close();
         });
     }
+  };
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -88,6 +95,14 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
             <Button
               variant="outline"
               size="icon"
+              onClick={handleRefresh}
+              title="Refresh"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
               onClick={handleFullscreen}
               title="Fullscreen"
             >
@@ -104,6 +119,14 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
             <Button
               variant="outline"
               size="icon"
+              onClick={() => setShowGameBar(!showGameBar)}
+              title="Game Bar"
+            >
+              <Gamepad2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
               onClick={onClose}
               title="Close"
             >
@@ -114,12 +137,14 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
         <div className="flex-1 relative bg-black">
           <iframe
             ref={iframeRef}
+            key={refreshKey}
             className="w-full h-full border-0"
             title={game.name}
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"
           />
         </div>
       </div>
+      {showGameBar && <GameBar onClose={() => setShowGameBar(false)} />}
     </div>
   );
 };
