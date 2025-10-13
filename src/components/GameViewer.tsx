@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Game } from "@/hooks/useGames";
 import { GameBar } from "@/components/GameBar";
 import { PerformanceOverlay } from "@/components/PerformanceOverlay";
+import { Crosshair } from "@/components/Crosshair";
 
 interface GameViewerProps {
   game: Game | null;
@@ -15,6 +16,46 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
   const [showGameBar, setShowGameBar] = useState(false);
   const [showPerformance, setShowPerformance] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Load crosshair settings
+  const [showCrosshair, setShowCrosshair] = useState(() => {
+    const saved = localStorage.getItem("showCrosshair");
+    return saved === "true";
+  });
+  const [crosshairPos, setCrosshairPos] = useState(() => {
+    const saved = localStorage.getItem("crosshairPos");
+    return saved ? JSON.parse(saved) : { x: 50, y: 50 };
+  });
+  const [crosshairType, setCrosshairType] = useState(() => {
+    return localStorage.getItem("crosshairType") || "default";
+  });
+  const [crosshairRotation, setCrosshairRotation] = useState(() => {
+    const saved = localStorage.getItem("crosshairRotation");
+    return saved ? parseInt(saved) : 0;
+  });
+
+  // Listen for crosshair settings changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedShow = localStorage.getItem("showCrosshair");
+      const savedPos = localStorage.getItem("crosshairPos");
+      const savedType = localStorage.getItem("crosshairType");
+      const savedRotation = localStorage.getItem("crosshairRotation");
+      
+      setShowCrosshair(savedShow === "true");
+      if (savedPos) setCrosshairPos(JSON.parse(savedPos));
+      if (savedType) setCrosshairType(savedType);
+      if (savedRotation) setCrosshairRotation(parseInt(savedRotation));
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    const interval = setInterval(handleStorageChange, 100);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     if (game && iframeRef.current) {
@@ -161,6 +202,12 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
           <PerformanceOverlay type="ping" />
         </>
       )}
+      <Crosshair 
+        visible={showCrosshair}
+        position={crosshairPos}
+        type={crosshairType}
+        rotation={crosshairRotation}
+      />
     </div>
   );
 };

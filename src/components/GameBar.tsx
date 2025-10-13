@@ -1,30 +1,50 @@
 import { useState, useEffect, useRef } from "react";
-import { GripVertical, X, RotateCcw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
+import { GripVertical, X, RotateCcw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 
 interface GameBarProps {
   onClose: () => void;
 }
 
 export const GameBar = ({ onClose }: GameBarProps) => {
-  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [position, setPosition] = useState(() => {
+    const saved = localStorage.getItem("gameBarPosition");
+    return saved ? JSON.parse(saved) : { x: window.innerWidth - 360, y: 80 };
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [showCrosshair, setShowCrosshair] = useState(false);
-  const [crosshairPos, setCrosshairPos] = useState({ x: 50, y: 50 });
+  const [showCrosshair, setShowCrosshair] = useState(() => {
+    const saved = localStorage.getItem("showCrosshair");
+    return saved === "true";
+  });
+  const [crosshairPos, setCrosshairPos] = useState(() => {
+    const saved = localStorage.getItem("crosshairPos");
+    return saved ? JSON.parse(saved) : { x: 50, y: 50 };
+  });
+  const [crosshairType, setCrosshairType] = useState(() => {
+    return localStorage.getItem("crosshairType") || "default";
+  });
+  const [crosshairRotation, setCrosshairRotation] = useState(() => {
+    const saved = localStorage.getItem("crosshairRotation");
+    return saved ? parseInt(saved) : 0;
+  });
   const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
-      setPosition({
+      const newPos = {
         x: e.clientX - dragOffset.x,
         y: e.clientY - dragOffset.y,
-      });
+      };
+      setPosition(newPos);
+      localStorage.setItem("gameBarPosition", JSON.stringify(newPos));
     };
 
     const handleMouseUp = () => setIsDragging(false);
@@ -39,6 +59,22 @@ export const GameBar = ({ onClose }: GameBarProps) => {
       document.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, dragOffset]);
+
+  useEffect(() => {
+    localStorage.setItem("showCrosshair", showCrosshair.toString());
+  }, [showCrosshair]);
+
+  useEffect(() => {
+    localStorage.setItem("crosshairPos", JSON.stringify(crosshairPos));
+  }, [crosshairPos]);
+
+  useEffect(() => {
+    localStorage.setItem("crosshairType", crosshairType);
+  }, [crosshairType]);
+
+  useEffect(() => {
+    localStorage.setItem("crosshairRotation", crosshairRotation.toString());
+  }, [crosshairRotation]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (barRef.current) {
@@ -84,6 +120,12 @@ export const GameBar = ({ onClose }: GameBarProps) => {
   const resetSettings = () => {
     setShowCrosshair(false);
     setCrosshairPos({ x: 50, y: 50 });
+    setCrosshairType("default");
+    setCrosshairRotation(0);
+    localStorage.removeItem("showCrosshair");
+    localStorage.removeItem("crosshairPos");
+    localStorage.removeItem("crosshairType");
+    localStorage.removeItem("crosshairRotation");
   };
 
   return (
@@ -119,6 +161,36 @@ export const GameBar = ({ onClose }: GameBarProps) => {
             <>
               <Separator />
               <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Crosshair Type</Label>
+                  <Select value={crosshairType} onValueChange={setCrosshairType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="dot">Dot</SelectItem>
+                      <SelectItem value="cross">Cross</SelectItem>
+                      <SelectItem value="circle">Circle</SelectItem>
+                      <SelectItem value="square">Square</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Rotation</Label>
+                    <span className="text-xs text-muted-foreground">{crosshairRotation}°</span>
+                  </div>
+                  <Slider
+                    value={[crosshairRotation]}
+                    onValueChange={(values) => setCrosshairRotation(values[0])}
+                    min={0}
+                    max={360}
+                    step={15}
+                  />
+                </div>
+
                 <Label className="text-xs font-semibold">Position Controls</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
@@ -127,8 +199,8 @@ export const GameBar = ({ onClose }: GameBarProps) => {
                       type="number"
                       min="0"
                       max="100"
-                      step="0.1"
-                      value={crosshairPos.x.toFixed(1)}
+                      step="0.01"
+                      value={crosshairPos.x.toFixed(2)}
                       onChange={(e) => handleXChange(e.target.value)}
                       className="h-9 text-center"
                     />
@@ -139,8 +211,8 @@ export const GameBar = ({ onClose }: GameBarProps) => {
                       type="number"
                       min="0"
                       max="100"
-                      step="0.1"
-                      value={crosshairPos.y.toFixed(1)}
+                      step="0.01"
+                      value={crosshairPos.y.toFixed(2)}
                       onChange={(e) => handleYChange(e.target.value)}
                       className="h-9 text-center"
                     />
@@ -185,24 +257,6 @@ export const GameBar = ({ onClose }: GameBarProps) => {
         </div>
       </div>
 
-      {showCrosshair && (
-        <div
-          className="fixed z-50 pointer-events-none"
-          style={{
-            left: `${crosshairPos.x}%`,
-            top: `${crosshairPos.y}%`,
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <div className="relative w-6 h-6">
-            <div className="absolute left-1/2 top-0 w-0.5 h-2 bg-primary -translate-x-1/2" />
-            <div className="absolute left-1/2 bottom-0 w-0.5 h-2 bg-primary -translate-x-1/2" />
-            <div className="absolute top-1/2 left-0 h-0.5 w-2 bg-primary -translate-y-1/2" />
-            <div className="absolute top-1/2 right-0 h-0.5 w-2 bg-primary -translate-y-1/2" />
-            <div className="absolute left-1/2 top-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2" />
-          </div>
-        </div>
-      )}
     </>
   );
 };

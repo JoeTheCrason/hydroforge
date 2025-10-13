@@ -43,7 +43,11 @@ export const Settings = ({ children }: SettingsProps) => {
     localStorage.setItem("customIcon", tempIcon);
     
     const theme = tempDarkMode ? "dark" : "light";
-    document.documentElement.classList.toggle("dark", tempDarkMode);
+    if (tempDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
     localStorage.setItem("theme", theme);
     
     toast("Settings saved successfully");

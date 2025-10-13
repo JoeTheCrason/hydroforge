@@ -13,6 +13,7 @@ export interface Game {
   author?: string;
   authorLink?: string;
   featured?: boolean;
+  source?: string;
 }
 
 export const useGames = () => {
@@ -23,12 +24,13 @@ export const useGames = () => {
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const response = await fetch(
+        // Fetch gn-math games
+        const gnMathResponse = await fetch(
           "https://cdn.jsdelivr.net/gh/gn-math/assets@main/zones.json?t=" + Date.now()
         );
-        const data = await response.json();
+        const gnMathData = await gnMathResponse.json();
         
-        const transformedGames = data.map((game: any) => ({
+        const gnMathGames = gnMathData.map((game: any) => ({
           id: game.id,
           title: game.name,
           name: game.name,
@@ -38,9 +40,57 @@ export const useGames = () => {
           author: game.author,
           authorLink: game.authorLink,
           featured: game.featured,
+          source: "gn-math",
         }));
 
-        setGames(transformedGames);
+        // Fetch 3kh0 games list
+        try {
+          const khGamesResponse = await fetch(
+            "https://api.github.com/repos/3kh0/3kh0-lite/contents/projects?t=" + Date.now()
+          );
+          const khGamesData = await khGamesResponse.json();
+          
+          const khGames = await Promise.all(
+            khGamesData
+              .filter((item: any) => item.type === "dir")
+              .map(async (item: any, index: number) => {
+                try {
+                  // Try to fetch metadata
+                  const metaResponse = await fetch(
+                    `https://raw.githubusercontent.com/3kh0/3kh0-lite/main/projects/${item.name}/metadata.json`
+                  );
+                  const metadata = await metaResponse.json();
+                  
+                  return {
+                    id: 10000 + index,
+                    title: metadata.title || item.name,
+                    name: metadata.title || item.name,
+                    image: `https://raw.githubusercontent.com/3kh0/3kh0-lite/main/projects/${item.name}/${metadata.icon || "icon.png"}`,
+                    cover: `https://raw.githubusercontent.com/3kh0/3kh0-lite/main/projects/${item.name}/${metadata.icon || "icon.png"}`,
+                    url: `https://raw.githubusercontent.com/3kh0/3kh0-lite/main/projects/${item.name}/index.html`,
+                    source: "3kh0",
+                  };
+                } catch {
+                  // Fallback if metadata doesn't exist
+                  return {
+                    id: 10000 + index,
+                    title: item.name.replace(/-/g, " "),
+                    name: item.name.replace(/-/g, " "),
+                    image: `https://raw.githubusercontent.com/3kh0/3kh0-lite/main/projects/${item.name}/icon.png`,
+                    cover: `https://raw.githubusercontent.com/3kh0/3kh0-lite/main/projects/${item.name}/icon.png`,
+                    url: `https://raw.githubusercontent.com/3kh0/3kh0-lite/main/projects/${item.name}/index.html`,
+                    source: "3kh0",
+                  };
+                }
+              })
+          );
+
+          setGames([...gnMathGames, ...khGames]);
+        } catch (khError) {
+          console.error("Failed to load 3kh0 games:", khError);
+          setGames(gnMathGames);
+        }
+
         setLoading(false);
       } catch (err) {
         setError("Failed to load games");

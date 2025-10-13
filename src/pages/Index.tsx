@@ -4,23 +4,56 @@ import { GameGrid } from "@/components/GameGrid";
 import { GameViewer } from "@/components/GameViewer";
 import { useGames, Game } from "@/hooks/useGames";
 import { Particles } from "@/components/Particles";
+import { DuplicateGameDialog } from "@/components/DuplicateGameDialog";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [duplicateGames, setDuplicateGames] = useState<Game[]>([]);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const { games, loading } = useGames();
 
+  // Group games by title to find duplicates
+  const gamesByTitle = useMemo(() => {
+    const grouped = new Map<string, Game[]>();
+    games.forEach(game => {
+      const normalizedTitle = game.title.toLowerCase().trim();
+      if (!grouped.has(normalizedTitle)) {
+        grouped.set(normalizedTitle, []);
+      }
+      grouped.get(normalizedTitle)!.push(game);
+    });
+    return grouped;
+  }, [games]);
+
+  // Get unique games (only one per title)
+  const uniqueGames = useMemo(() => {
+    return Array.from(gamesByTitle.values()).map(gameGroup => gameGroup[0]);
+  }, [gamesByTitle]);
+
+  const handleGameClick = (game: Game) => {
+    const normalizedTitle = game.title.toLowerCase().trim();
+    const duplicates = gamesByTitle.get(normalizedTitle) || [];
+    
+    if (duplicates.length > 1) {
+      setDuplicateGames(duplicates);
+      setShowDuplicateDialog(true);
+    } else {
+      setSelectedGame(game);
+    }
+  };
+
   const featuredGames = useMemo(() => {
-    return games.filter(game => 
+    return uniqueGames.filter(game => 
       game.id === -1 || 
       [166, 467, 215, 205, 253, 259, 331, 465, 262, 468, 217, 542, 445, 446, 182, 427, 194, 267, 461, 460, 292, 453, 420, 264, 466, 226, 188].includes(game.id)
     );
-  }, [games]);
+  }, [uniqueGames]);
 
   const allGames = useMemo(() => {
-    return games.filter(game => game.id !== -1);
-  }, [games]);
+    return uniqueGames.filter(game => game.id !== -1);
+  }, [uniqueGames]);
 
   const filteredAndSortedFeaturedGames = useMemo(() => {
     let filtered = featuredGames.filter(game =>
@@ -72,18 +105,24 @@ const Index = () => {
           games={filteredAndSortedFeaturedGames}
           title="Featured Zones"
           defaultOpen={true}
-          onGameClick={setSelectedGame}
+          onGameClick={handleGameClick}
         />
         
         <GameGrid 
           games={filteredAndSortedAllGames}
           title="All Zones"
           defaultOpen={true}
-          onGameClick={setSelectedGame}
+          onGameClick={handleGameClick}
         />
       </main>
 
       <GameViewer game={selectedGame} onClose={() => setSelectedGame(null)} />
+      <DuplicateGameDialog
+        open={showDuplicateDialog}
+        games={duplicateGames}
+        onSelect={setSelectedGame}
+        onClose={() => setShowDuplicateDialog(false)}
+      />
     </div>
   );
 };
