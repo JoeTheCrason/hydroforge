@@ -14,43 +14,9 @@ export const GameBar = ({ onClose }: GameBarProps) => {
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [fps, setFps] = useState(60);
-  const [ping, setPing] = useState(0);
-  const [showFps, setShowFps] = useState(true);
-  const [showPing, setShowPing] = useState(true);
   const [showCrosshair, setShowCrosshair] = useState(false);
   const [crosshairPos, setCrosshairPos] = useState({ x: 50, y: 50 });
   const barRef = useRef<HTMLDivElement>(null);
-  const lastFrameTime = useRef(Date.now());
-
-  useEffect(() => {
-    const calculateFps = () => {
-      const now = Date.now();
-      const delta = now - lastFrameTime.current;
-      const currentFps = Math.round(1000 / delta);
-      setFps(Math.min(currentFps, 144));
-      lastFrameTime.current = now;
-    };
-
-    const interval = setInterval(calculateFps, 100);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const measurePing = async () => {
-      const start = Date.now();
-      try {
-        await fetch(window.location.href, { method: 'HEAD', cache: 'no-cache' });
-        setPing(Date.now() - start);
-      } catch {
-        setPing(0);
-      }
-    };
-
-    measurePing();
-    const interval = setInterval(measurePing, 2000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -85,16 +51,37 @@ export const GameBar = ({ onClose }: GameBarProps) => {
     }
   };
 
-  const moveCrosshair = (dx: number, dy: number) => {
-    setCrosshairPos(prev => ({
-      x: Math.max(0, Math.min(100, prev.x + dx)),
-      y: Math.max(0, Math.min(100, prev.y + dy)),
-    }));
+  const moveCrosshair = (direction: 'up' | 'down' | 'left' | 'right') => {
+    setCrosshairPos(prev => {
+      const step = 0.5;
+      switch (direction) {
+        case 'up': return { ...prev, y: Math.max(0, prev.y - step) };
+        case 'down': return { ...prev, y: Math.min(100, prev.y + step) };
+        case 'left': return { ...prev, x: Math.max(0, prev.x - step) };
+        case 'right': return { ...prev, x: Math.min(100, prev.x + step) };
+      }
+    });
+  };
+
+  const handleXChange = (value: string) => {
+    const num = parseFloat(value);
+    if (!isNaN(num) && num >= 0 && num <= 100) {
+      setCrosshairPos(prev => ({ ...prev, x: num }));
+    }
+  };
+
+  const handleYChange = (value: string) => {
+    const num = parseFloat(value);
+    if (!isNaN(num) && num >= 0 && num <= 100) {
+      setCrosshairPos(prev => ({ ...prev, y: num }));
+    }
+  };
+
+  const resetCrosshair = () => {
+    setCrosshairPos({ x: 50, y: 50 });
   };
 
   const resetSettings = () => {
-    setShowFps(true);
-    setShowPing(true);
     setShowCrosshair(false);
     setCrosshairPos({ x: 50, y: 50 });
   };
@@ -104,7 +91,7 @@ export const GameBar = ({ onClose }: GameBarProps) => {
       <div
         ref={barRef}
         style={{ left: position.x, top: position.y }}
-        className="fixed z-[60] bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-2xl p-4 min-w-[280px] cursor-move group"
+        className="fixed z-[60] bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-2xl p-4 min-w-[320px] cursor-move group"
         onMouseDown={handleMouseDown}
       >
         <div className="flex items-center justify-between mb-4">
@@ -124,84 +111,65 @@ export const GameBar = ({ onClose }: GameBarProps) => {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-sm">FPS Counter</Label>
-            <div className="flex items-center gap-2">
-              {showFps && <span className="text-sm font-mono text-primary">{fps} FPS</span>}
-              <Switch checked={showFps} onCheckedChange={setShowFps} />
-            </div>
+            <Label className="text-sm">Crosshair</Label>
+            <Switch checked={showCrosshair} onCheckedChange={setShowCrosshair} />
           </div>
 
-          <div className="flex items-center justify-between">
-            <Label className="text-sm">Ping Counter</Label>
-            <div className="flex items-center gap-2">
-              {showPing && <span className="text-sm font-mono text-primary">{ping}ms</span>}
-              <Switch checked={showPing} onCheckedChange={setShowPing} />
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm">Crosshair</Label>
-              <Switch checked={showCrosshair} onCheckedChange={setShowCrosshair} />
-            </div>
-
-            {showCrosshair && (
-              <div className="space-y-2 pl-2">
-                <div className="grid grid-cols-3 gap-1 w-fit mx-auto">
+          {showCrosshair && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <Label className="text-xs font-semibold">Position Controls</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">X (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={crosshairPos.x.toFixed(1)}
+                      onChange={(e) => handleXChange(e.target.value)}
+                      className="h-9 text-center"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Y (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={crosshairPos.y.toFixed(1)}
+                      onChange={(e) => handleYChange(e.target.value)}
+                      className="h-9 text-center"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
                   <div />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => moveCrosshair(0, -1)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => moveCrosshair('up')}>
                     <ArrowUp className="h-3 w-3" />
                   </Button>
                   <div />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => moveCrosshair(-1, 0)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => moveCrosshair('left')}>
                     <ArrowLeft className="h-3 w-3" />
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setCrosshairPos({ x: 50, y: 50 })}
-                  >
+                  <Button size="sm" variant="outline" onClick={resetCrosshair}>
                     <RotateCcw className="h-3 w-3" />
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => moveCrosshair(1, 0)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => moveCrosshair('right')}>
                     <ArrowRight className="h-3 w-3" />
                   </Button>
                   <div />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => moveCrosshair(0, 1)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => moveCrosshair('down')}>
                     <ArrowDown className="h-3 w-3" />
                   </Button>
+                  <div />
                 </div>
-                <Input
-                  readOnly
-                  value={`X: ${crosshairPos.x.toFixed(1)}%, Y: ${crosshairPos.y.toFixed(1)}%`}
-                  className="text-center text-xs font-mono"
-                />
               </div>
-            )}
-          </div>
+            </>
+          )}
 
           <Separator />
 

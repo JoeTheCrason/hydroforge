@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Maximize2, ExternalLink, RefreshCw, Gamepad2 } from "lucide-react";
+import { X, Maximize2, ExternalLink, RefreshCw, Gamepad2, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Game } from "@/hooks/useGames";
 import { GameBar } from "@/components/GameBar";
+import { PerformanceOverlay } from "@/components/PerformanceOverlay";
 
 interface GameViewerProps {
   game: Game | null;
@@ -12,6 +13,7 @@ interface GameViewerProps {
 export const GameViewer = ({ game, onClose }: GameViewerProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [showGameBar, setShowGameBar] = useState(false);
+  const [showPerformance, setShowPerformance] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -119,6 +121,14 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
             <Button
               variant="outline"
               size="icon"
+              onClick={() => setShowPerformance(!showPerformance)}
+              title="Performance Overlay"
+            >
+              <Activity className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => setShowGameBar(!showGameBar)}
               title="Game Bar"
             >
@@ -145,6 +155,12 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
         </div>
       </div>
       {showGameBar && <GameBar onClose={() => setShowGameBar(false)} />}
+      {showPerformance && (
+        <>
+          <PerformanceOverlay type="fps" />
+          <PerformanceOverlay type="ping" />
+        </>
+      )}
     </div>
   );
 };

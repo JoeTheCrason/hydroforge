@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { GameGrid } from "@/components/GameGrid";
 import { GameViewer } from "@/components/GameViewer";
 import { useGames, Game } from "@/hooks/useGames";
+import { Particles } from "@/components/Particles";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,7 +58,8 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <Particles />
       <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -76,7 +78,7 @@ const Index = () => {
         <GameGrid 
           games={filteredAndSortedAllGames}
           title="All Zones"
-          defaultOpen={false}
+          defaultOpen={true}
           onGameClick={setSelectedGame}
         />
       </main>

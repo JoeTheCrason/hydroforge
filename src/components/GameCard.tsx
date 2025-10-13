@@ -26,7 +26,7 @@ export const GameCard = ({ title, image, onClick, isContactCard = false }: GameC
   return (
     <Card 
       onClick={onClick}
-      className="group relative overflow-hidden cursor-pointer border-border/50 bg-card hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)]"
+      className="group relative overflow-hidden cursor-pointer border-border/50 bg-card hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)] card-hover"
     >
       <div className="aspect-square overflow-hidden">
         <img

@@ -23,23 +23,31 @@ export const Settings = ({ children }: SettingsProps) => {
     const saved = localStorage.getItem("theme");
     return saved === "dark" || saved === null;
   });
+  
+  const [tempTitle, setTempTitle] = useState(customTitle);
+  const [tempIcon, setTempIcon] = useState(customIcon);
+  const [tempDarkMode, setTempDarkMode] = useState(isDarkMode);
 
-  useEffect(() => {
-    document.title = customTitle;
-    localStorage.setItem("customTitle", customTitle);
+  const handleSaveChanges = () => {
+    setCustomTitle(tempTitle);
+    setCustomIcon(tempIcon);
+    setIsDarkMode(tempDarkMode);
+    
+    document.title = tempTitle;
+    localStorage.setItem("customTitle", tempTitle);
     
     const favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement;
     if (favicon) {
-      favicon.href = customIcon;
+      favicon.href = tempIcon;
     }
-    localStorage.setItem("customIcon", customIcon);
-  }, [customTitle, customIcon]);
-
-  useEffect(() => {
-    const theme = isDarkMode ? "dark" : "light";
-    document.documentElement.classList.toggle("dark", isDarkMode);
+    localStorage.setItem("customIcon", tempIcon);
+    
+    const theme = tempDarkMode ? "dark" : "light";
+    document.documentElement.classList.toggle("dark", tempDarkMode);
     localStorage.setItem("theme", theme);
-  }, [isDarkMode]);
+    
+    toast("Settings saved successfully");
+  };
 
   const handleOpenInBlank = () => {
     const win = window.open("about:blank", "_blank");
@@ -62,10 +70,10 @@ export const Settings = ({ children }: SettingsProps) => {
   };
 
   const handleReset = () => {
-    setCustomTitle("HydroForge");
-    setCustomIcon("/favicon.ico");
-    setIsDarkMode(true);
-    toast("Settings reset to default");
+    setTempTitle("HydroForge");
+    setTempIcon("/favicon.ico");
+    setTempDarkMode(true);
+    toast("Settings reset to default (click Save to apply)");
   };
 
   return (
@@ -84,8 +92,8 @@ export const Settings = ({ children }: SettingsProps) => {
               <Label htmlFor="title">Custom Title</Label>
               <Input
                 id="title"
-                value={customTitle}
-                onChange={(e) => setCustomTitle(e.target.value)}
+                value={tempTitle}
+                onChange={(e) => setTempTitle(e.target.value)}
                 placeholder="Enter custom title"
               />
             </div>
@@ -94,8 +102,8 @@ export const Settings = ({ children }: SettingsProps) => {
               <Label htmlFor="icon">Custom Icon URL</Label>
               <Input
                 id="icon"
-                value={customIcon}
-                onChange={(e) => setCustomIcon(e.target.value)}
+                value={tempIcon}
+                onChange={(e) => setTempIcon(e.target.value)}
                 placeholder="Enter icon URL"
               />
             </div>
@@ -107,14 +115,14 @@ export const Settings = ({ children }: SettingsProps) => {
             <div className="space-y-0.5">
               <Label>Theme</Label>
               <p className="text-sm text-muted-foreground">
-                {isDarkMode ? "Dark" : "Light"} mode
+                {tempDarkMode ? "Dark" : "Light"} mode
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Sun className="h-4 w-4" />
               <Switch
-                checked={isDarkMode}
-                onCheckedChange={setIsDarkMode}
+                checked={tempDarkMode}
+                onCheckedChange={setTempDarkMode}
               />
               <Moon className="h-4 w-4" />
             </div>
@@ -123,6 +131,13 @@ export const Settings = ({ children }: SettingsProps) => {
           <Separator />
 
           <div className="flex flex-col gap-2">
+            <Button
+              onClick={handleSaveChanges}
+              className="w-full"
+            >
+              Save Changes
+            </Button>
+            
             <Button
               variant="outline"
               onClick={handleOpenInBlank}
