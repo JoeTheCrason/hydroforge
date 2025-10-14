@@ -37,8 +37,8 @@ export const useGames = () => {
           image: game.cover.replace("{COVER_URL}", COVER_URL).replace("{HTML_URL}", HTML_URL),
           cover: game.cover.replace("{COVER_URL}", COVER_URL).replace("{HTML_URL}", HTML_URL),
           url: game.url.replace("{COVER_URL}", COVER_URL).replace("{HTML_URL}", HTML_URL),
-          author: game.author,
-          authorLink: game.authorLink,
+          author: game.id === 253 ? "Hydroforge" : game.author,
+          authorLink: game.id === 253 ? undefined : game.authorLink,
           featured: game.featured,
           source: "gn-math",
         }));

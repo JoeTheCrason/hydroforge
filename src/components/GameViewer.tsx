@@ -66,27 +66,10 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
         return;
       }
 
-      // Handle Zapier chat for game 253
+      // Handle Zapier chat for game 253 - load directly
       if (game.id === 253) {
-        if (iframeRef.current.contentDocument) {
-          iframeRef.current.contentDocument.open();
-          iframeRef.current.contentDocument.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="utf-8">
-                <style>
-                  body { margin: 0; padding: 0; overflow: hidden; }
-                  iframe { width: 100%; height: 100vh; border: none; }
-                </style>
-              </head>
-              <body>
-                <iframe src="https://hydroforge.zapier.app/chat"></iframe>
-              </body>
-            </html>
-          `);
-          iframeRef.current.contentDocument.close();
-        }
+        // For game 253, we'll use a direct iframe src instead of document.write
+        // This will be handled in the JSX below
         return;
       }
 
@@ -217,13 +200,24 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
           </div>
         </div>
         <div className="flex-1 relative bg-black">
-          <iframe
-            ref={iframeRef}
-            key={refreshKey}
-            className="w-full h-full border-0"
-            title={game.name}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"
-          />
+          {game.id === 253 ? (
+            <iframe
+              key={refreshKey}
+              src="https://hydroforge.zapier.app/chat"
+              className="w-full h-full border-0"
+              title={game.name}
+              allow="fullscreen; autoplay; encrypted-media"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock allow-top-navigation"
+            />
+          ) : (
+            <iframe
+              ref={iframeRef}
+              key={refreshKey}
+              className="w-full h-full border-0"
+              title={game.name}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-pointer-lock"
+            />
+          )}
         </div>
       </div>
       {showGameBar && <GameBar onClose={() => setShowGameBar(false)} />}
