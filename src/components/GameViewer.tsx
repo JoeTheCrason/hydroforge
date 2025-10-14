@@ -59,6 +59,37 @@ export const GameViewer = ({ game, onClose }: GameViewerProps) => {
 
   useEffect(() => {
     if (game && iframeRef.current) {
+      // Handle contact redirection
+      if (game.id === -1) {
+        window.open("https://forms.gle/L18wSqGhfTGEhwB39", "_blank");
+        onClose();
+        return;
+      }
+
+      // Handle Zapier chat for game 253
+      if (game.id === 253) {
+        if (iframeRef.current.contentDocument) {
+          iframeRef.current.contentDocument.open();
+          iframeRef.current.contentDocument.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <style>
+                  body { margin: 0; padding: 0; overflow: hidden; }
+                  iframe { width: 100%; height: 100vh; border: none; }
+                </style>
+              </head>
+              <body>
+                <iframe src="https://hydroforge.zapier.app/chat"></iframe>
+              </body>
+            </html>
+          `);
+          iframeRef.current.contentDocument.close();
+        }
+        return;
+      }
+
       if (game.url.startsWith("http://") || game.url.startsWith("https://")) {
         if (!game.url.includes("cdn.jsdelivr.net")) {
           window.open(game.url, "_blank");
